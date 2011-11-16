@@ -1,0 +1,13 @@
+PROJECT
+=======
+This project allowed to send request to CMCIC admin interface.
+
+This project use some components (symfony and sfWebBrowserPlugin), see README in the lib folder
+
+LICENSE
+=======
+MIT License <http://www.opensource.org/licenses/mit-license.php>
+
+AUTHORS
+=======
+* Simon Leblanc contact@leblanc-simon.eu
