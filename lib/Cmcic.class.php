@@ -124,8 +124,6 @@ class Cmcic
       
       $dom = self::getBrowser()->getResponseDom();
       
-      file_put_contents(sfConfig::get('sf_data_dir').'/cmcic.txt', $dom->saveHTML());
-      
       $xpath = new DomXpath($dom);
       
       $links = $xpath->query('//td/a[@onmouseenter]');
