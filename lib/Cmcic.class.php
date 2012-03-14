@@ -164,6 +164,62 @@ class Cmcic
   
   
   /**
+   * Récupère le nombre de paiement récurrent en cours
+   *
+   * @return  int       Le nombre de paiement récurrent en cours
+   * @access  public
+   */
+  public function getNbCurrentPayments()
+  {
+    $url = self::URL_BASE.'/liste_paiements.cgi?TPE='.self::$tpe.'&type=PR&ref=';
+    self::getBrowser()->get($url);
+    if (self::checkValid() === false) {
+      continue;
+    }
+    
+    $dom = self::getBrowser()->getResponseDom();
+    
+    file_put_contents(sfConfig::get('sf_data_dir').'/cmcic'.__METHOD__.'.txt', $dom->saveHTML());
+    
+    $xpath = new DomXpath($dom);
+    $nb_items = $xpath->query('//form[1]/table[1]/tr')->length - 1;
+    
+    return $nb_items;
+  }
+  
+  
+  /**
+   * Récupère les référence avec un nombre d'occurence minimum 
+   *
+   * @param   int   $nb_occurence   Le nombre d'occurence limite
+   * @return  array                 Les références de plus de $nb_occurance
+   * @access  public
+   */
+  public function getPaymentsWithMore($nb_occurence = 12)
+  {
+    $url = self::URL_BASE.'/liste_paiements.cgi?TPE='.self::$tpe.'&type=PR&ref=';
+    self::getBrowser()->get($url);
+    if (self::checkValid() === false) {
+      continue;
+    }
+    
+    $dom = self::getBrowser()->getResponseDom();
+    
+    file_put_contents(sfConfig::get('sf_data_dir').'/cmcic'.__METHOD__.'.txt', $dom->saveHTML());
+    
+    $xpath = new DomXpath($dom);
+    $items = $xpath->query('//form[1]/table[1]/tr[td[8]>='.$nb_occurence.']/td[2]');
+    
+    $references = array();
+    for ($i = 0; $i < $items->length; $i++) {
+        $references[] = strip_tags($items->item($i)->nodeValue);
+    }
+    
+    return $references;
+  }
+  
+  
+  /**
    * Indique si une requête a échouée
    *
    * @return  bool  True en cas d'erreur, false sinon
