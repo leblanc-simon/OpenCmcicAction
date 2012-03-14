@@ -9,17 +9,17 @@ USAGE
 =====
 
 Get all payments between 2 dates : 
-```bash
+```
 php get_recurrent.php "2011-01-01" "2011-12-31"
 ```
 
 Get the number of actives recurrents payments :
-```bash
+```
 php get_nb_recurrent.php
 ```
 
-Stop all active recurrents payments with more or equal x occurences
-```bash
+Stop all active recurrents payments with more or equal x occurences :
+```
 php del_recurrent.php 12
 ```
 
