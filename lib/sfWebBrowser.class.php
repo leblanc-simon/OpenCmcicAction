@@ -31,7 +31,8 @@ class sfWebBrowser
     $responseDomCssSelector  = null,
     $responseXml             = null,
     $fields                  = array(),
-    $urlInfo                 = array();
+    $urlInfo                 = array(),
+    $adapterOptions          = array();
 
   public function __construct($defaultHeaders = array(), $adapterClass = null, $adapterOptions = array())
   {
@@ -52,6 +53,7 @@ class sfWebBrowser
     }
     $this->defaultHeaders = $this->fixHeaders($defaultHeaders);
     $this->adapter = new $adapterClass($adapterOptions);
+    $this->adapterOptions = $adapterOptions;
   }
     
   // Browser methods
@@ -192,7 +194,11 @@ class sfWebBrowser
     }
     else if (!isset($this->urlInfo['port']))
     {
-      $this->urlInfo['port'] = 80;
+      if ((isset($urlInfo['scheme']) && $urlInfo['scheme'] == 'https') || (isset($this->urlInfo['scheme']) && $this->urlInfo['scheme'] == 'https')) {
+        $this->urlInfo['port'] = 443;
+      } else {
+        $this->urlInfo['port'] = 80;
+      }
     }
 
     if(!isset($urlInfo['host']))
@@ -290,6 +296,17 @@ class sfWebBrowser
 
     // form attributes
     $url = $form->getAttribute('action');
+    if (substr($url, 0, 1) != '/' && (substr($url, 0, 7) != 'http://' || substr($url, 0, 8) != 'https://')) {
+      // add complete path
+      if (isset($this->urlInfo['path'])) {
+        $base = pathinfo($this->urlInfo['path'], PATHINFO_DIRNAME);
+        if ($base != '/') {
+          $base .= '/';
+        }
+        $url = substr($base.$url, 1);
+      }
+    }
+    
     $method = $form->getAttribute('method') ? strtolower($form->getAttribute('method')) : 'get';
 
     // merge form default values and arguments
@@ -370,6 +387,9 @@ class sfWebBrowser
     $arguments = sfToolkit::arrayDeepMerge($defaults, $this->fields, $arguments);
     if ('post' == $method)
     {
+      if (isset($arguments[''])) {
+        unset($arguments['']);
+      }
       return $this->post($url, $arguments);
     }
     else
@@ -784,6 +804,23 @@ class sfWebBrowser
   public function getDefaultRequestHeaders()
   {
     return $this->defaultHeaders;
+  }
+  
+  public function getOptionAdapter($name)
+  {
+    if (method_exists($this->adapter, 'getOption') === false) {
+      return null;
+    }
+    
+    return $this->adapter->getOption($name);
+  }
+  
+  public function restartAdapter()
+  {
+    $adapterClass = get_class($this->adapter);
+    
+    $this->adapter->__destruct();
+    $this->adapter = new $adapterClass($this->adapterOptions);
   }
   
   /**

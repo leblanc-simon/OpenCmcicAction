@@ -7,34 +7,15 @@
  * file that was distributed with this source code.
  */
 
-require_once dirname(__FILE__).'/lib/sfConfig.class.php';
-require_once dirname(__FILE__).'/lib/sfException.class.php';
-require_once dirname(__FILE__).'/lib/sfToolkit.class.php';
-require_once dirname(__FILE__).'/lib/sfWebBrowserInvalidResponseException.class.php';
-require_once dirname(__FILE__).'/lib/sfCurlAdapter.class.php';
-require_once dirname(__FILE__).'/lib/sfFopenAdapter.class.php';
-require_once dirname(__FILE__).'/lib/sfSocketsAdapter.class.php';
-require_once dirname(__FILE__).'/lib/sfWebBrowser.class.php';
-require_once dirname(__FILE__).'/lib/Cmcic.class.php';
-
-// define folder
-sfConfig::set('sf_data_dir', dirname(__FILE__).DIRECTORY_SEPARATOR.'data');
-sfConfig::set('sf_log_dir', dirname(__FILE__).DIRECTORY_SEPARATOR.'log');
-
-// define options browser
-$options = array(
-  'cookies'         => true,
-  /*'verbose'         => false,*/
-  'verbose_log'     => true,
-  'useragent'       => 'Mozilla/5.0 (X11; U; Linux i686; fr; rv:1.9.2.23) Gecko/20110921 Ubuntu/10.04 (lucid) Firefox/3.6.23',
-  'SSL_VERIFYPEER'  => false,
-);
+require_once dirname(__FILE__).'/config.inc.php';
 
 try {
-  // Get date
+  // Check args
   if ($argc !== 3) {
     throw new Exception('Nombre d\'argument incorrect');
   }
+  
+  // Get dates
   $debut = $argv[1];
   $fin   = $argv[2];
   
@@ -45,15 +26,6 @@ try {
     throw new Exception('La date de fin n\'est pas correcte : format yyyy-mm-dd');
   }
   
-  
-  // Init browser
-  Cmcic::setClassName('sfWebBrowser');
-  Cmcic::setAdapter('sfCurlAdapter');
-  Cmcic::setOptions($options);
-  
-  // Launch browser
-  $cmcic = new Cmcic('[your login]', '[your password]', '[your tpe ident]');
-  
   // Get all recurrent payment between begin and end
   $begin  = new DateTime();
   $end    = new DateTime();
@@ -61,8 +33,18 @@ try {
   $begin->setDate((int)$matches_debut[1], (int)$matches_debut[2], (int)$matches_debut[3]);
   $end->setDate((int)$matches_fin[1], (int)$matches_fin[2], (int)$matches_fin[3]);
   
+  // Launch browser
+  $cmcic = getCmcic($options);
+  
+  // Launch program
   $payments = $cmcic->getRecurrentPayments($begin, $end);
   
+  // Check result
+  if ($payments === false) {
+    throw new Exception('Erreur lors de la récupération des paiements : '.print_r($cmcic->getErrors(), true));
+  }
+  
+  // Write result
   $csv = '';
   foreach ($payments as $payment) {
     $csv .= '"'.$payment['date'].'",';
@@ -70,7 +52,7 @@ try {
     $csv .= '"'.$payment['amount'].'"'."\n";
   }
   
-  file_put_contents(__DIR__.'/recurrents.csv', $csv);
+  file_put_contents(__DIR__.'/recurrents.csv', $csv, FILE_APPEND);
   
   exit(0);
   
@@ -79,5 +61,6 @@ try {
   echo "*               ERROR                    *\n";
   echo "******************************************\n";
   echo $e->getMessage()."\n";
+  
   exit(1);
 }

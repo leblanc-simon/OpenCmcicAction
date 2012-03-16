@@ -8,9 +8,12 @@ This project use some components (symfony and sfWebBrowserPlugin), see README in
 USAGE
 =====
 
-Get all payments between 2 dates : 
+Edit config.inc.php file to replace the CMCIC_* constants with your personnal value and launch a program :
+
+
+Get all payments between 2 dates (begin date include and end date exclude) : 
 ```
-php get_recurrent.php "2011-01-01" "2011-12-31"
+php get_recurrent.php "2011-01-01" "2012-01-01"
 ```
 
 Get the number of actives recurrents payments :

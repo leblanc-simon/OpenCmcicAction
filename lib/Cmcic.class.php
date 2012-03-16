@@ -12,12 +12,12 @@
  *
  * @package    OpenCmcicAction
  * @author     Simon Leblanc <contact@leblanc-simon.eu>
- * @version    0.1
+ * @version    0.2
  */
 class Cmcic
 {
   const URL_BASE = 'https://paiement.creditmutuel.fr/bo'; // url de base de l'application
-  const SLEEP_CALL = 3; // Nombre de seconde entre chaque appel
+  const SLEEP_CALL = 5; // Nombre de seconde entre chaque appel
   
   static private $browser = null;
   static private $options = array();
@@ -40,6 +40,9 @@ class Cmcic
    */
   public function __construct($login, $password, $tpe)
   {
+    self::$browser = null;
+    self::$errors = array();
+    
     if ($this->login($login, $password) === false) {
       throw new Exception('unable to login');
     }
@@ -65,6 +68,7 @@ class Cmcic
       throw new Exception('reference must be a string');
     }
     
+    self::cleanCookies();
     self::checkSleepCall();
     
     self::getBrowser()->get(self::URL_BASE.'/liste_paiements.cgi?TPE='.self::$tpe.'&type=PR&ref='.$reference);
@@ -81,9 +85,10 @@ class Cmcic
       return false;
     }
     
+    self::cleanCookies();
     self::checkSleepCall();
     
-    self::getBrowser()->setField($name, 'S')->click('Exécuter');
+    self::getBrowser()->setField($name, 'S')->click('Exécuter', array('' => 'Ex&eacute;cuter'));
     if (self::checkValid() === false) {
       return false;
     }
@@ -112,6 +117,8 @@ class Cmcic
     }
     
     while ($begin < $end) {
+      self::cleanCookies();
+      
       $url  = self::URL_BASE.'/journee.cgi?TPE='.self::$tpe.'&tri=paiement';
       $url .= '&jour='.$begin->format('d').'&mois='.$begin->format('m').'&annee='.$begin->format('Y');
       
@@ -119,7 +126,7 @@ class Cmcic
       
       self::getBrowser()->get($url);
       if (self::checkValid() === false) {
-        continue;
+        return false;
       }
       
       $dom = self::getBrowser()->getResponseDom();
@@ -128,6 +135,8 @@ class Cmcic
       
       $links = $xpath->query('//td/a[@onmouseenter]');
       foreach ($links as $link) {
+        self::cleanCookies();
+        
         $link = self::URL_BASE.'/'.$link->getAttribute('href');
         
         self::checkSleepCall();
@@ -169,6 +178,8 @@ class Cmcic
    */
   public function getNbCurrentPayments()
   {
+    self::cleanCookies();
+    
     $url = self::URL_BASE.'/liste_paiements.cgi?TPE='.self::$tpe.'&type=PR&ref=';
     self::getBrowser()->get($url);
     if (self::checkValid() === false) {
@@ -176,8 +187,6 @@ class Cmcic
     }
     
     $dom = self::getBrowser()->getResponseDom();
-    
-    file_put_contents(sfConfig::get('sf_data_dir').'/cmcic'.__METHOD__.'.txt', $dom->saveHTML());
     
     $xpath = new DomXpath($dom);
     $nb_items = $xpath->query('//form[1]/table[1]/tr')->length - 1;
@@ -187,7 +196,7 @@ class Cmcic
   
   
   /**
-   * Récupère les référence avec un nombre d'occurence minimum 
+   * Récupère les référence avec un nombre d'occurence minimum
    *
    * @param   int   $nb_occurence   Le nombre d'occurence limite
    * @return  array                 Les références de plus de $nb_occurance
@@ -195,15 +204,15 @@ class Cmcic
    */
   public function getPaymentsWithMore($nb_occurence = 12)
   {
+    self::cleanCookies();
+    
     $url = self::URL_BASE.'/liste_paiements.cgi?TPE='.self::$tpe.'&type=PR&ref=';
     self::getBrowser()->get($url);
     if (self::checkValid() === false) {
-      continue;
+      return false;
     }
     
     $dom = self::getBrowser()->getResponseDom();
-    
-    file_put_contents(sfConfig::get('sf_data_dir').'/cmcic'.__METHOD__.'.txt', $dom->saveHTML());
     
     $xpath = new DomXpath($dom);
     $items = $xpath->query('//form[1]/table[1]/tr[td[8]>='.$nb_occurence.']/td[2]');
@@ -267,7 +276,7 @@ class Cmcic
   static public function setOptions($options)
   {
     if (is_array($options) === false) {
-      throw new Exception('option mustbe an array');
+      throw new Exception('option must be an array');
     }
     
     self::$options = $options;
@@ -327,6 +336,14 @@ class Cmcic
   private function login($login, $password)
   {
     self::checkSleepCall();
+    
+    // On vide le cookie s'il existe
+    $cookies_file = self::getBrowser()->getOptionAdapter('cookies_file');
+    if ($cookies_file !== null) {
+      if (file_exists($cookies_file) === true && is_writable($cookies_file) === true) {
+        unlink($cookies_file);
+      }
+    }
     
     self::getBrowser()
       ->post(
@@ -407,5 +424,42 @@ class Cmcic
     }
     
     return self::$browser;
+  }
+  
+  
+  /**
+   * Nettoyage du cookies
+   *
+   * @access  private
+   * @static
+   */
+  static private function cleanCookies()
+  {
+    self::getBrowser()->restartAdapter();
+    
+    $cookies_file = self::getBrowser()->getOptionAdapter('cookies_file');
+    if ($cookies_file !== null) {
+      if (file_exists($cookies_file) === true && is_writable($cookies_file) === true) {
+        $content_cookie = file_get_contents($cookies_file);
+        if ($content_cookie !== false) {
+          $cookies = explode("\n", $content_cookie);
+          $cookies = array_reverse($cookies);
+          $new_cookies = array();
+          $first = true;
+          
+          foreach ($cookies as $line) {
+            if (preg_match('/RNDTKN[A-F0-9]+\t[A-F0-9]+$/', $line) > 0 && $first === true) {
+              $first = false;
+            } elseif (preg_match('/RNDTKN[A-F0-9]+\t[A-F0-9]+$/', $line) > 0 && $first === false) {
+              continue;
+            }
+            
+            $new_cookies[] = $line;
+          }
+          
+          file_put_contents($cookies_file, implode("\n", array_reverse($new_cookies)));
+        }
+      }
+    }
   }
 }

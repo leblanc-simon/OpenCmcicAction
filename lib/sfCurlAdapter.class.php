@@ -61,6 +61,7 @@ class sfCurlAdapter
       else
       {
         $cookie_file = sfConfig::get('sf_data_dir').'/sfWebBrowserPlugin/sfCurlAdapter/cookies.txt';
+        $this->options['cookies_file'] = $cookie_file;
       }
       if (isset($curl_options['cookies_dir']))
       {
@@ -70,6 +71,7 @@ class sfCurlAdapter
       else
       {
         $cookie_dir = sfConfig::get('sf_data_dir').'/sfWebBrowserPlugin/sfCurlAdapter';
+        $this->options['cookies_dir'] = $cookie_dir;
       }
       if (!is_dir($cookie_dir))
       {
@@ -112,11 +114,12 @@ class sfCurlAdapter
     {
       curl_setopt($this->curl, CURLOPT_NOPROGRESS, false);
       curl_setopt($this->curl, CURLOPT_VERBOSE, true);
-      unset($curl_options['cookies']);
+      unset($curl_options['verbose']);
     }
     if (isset($curl_options['verbose_log']))
     {
       $log_file = sfConfig::get('sf_log_dir').'/sfCurlAdapter_verbose.log';
+      $this->options['log_file'] = $log_file;
       curl_setopt($this->curl, CURLOPT_VERBOSE, true);
       $this->fh = fopen($log_file, 'a+b');
       curl_setopt($this->curl, CURLOPT_STDERR, $this->fh);
@@ -225,7 +228,20 @@ class sfCurlAdapter
 
   public function __destruct()
   {
-    curl_close($this->curl);
+    @curl_close($this->curl);
+  }
+  
+  public function getOption($name)
+  {
+    if (is_string($name) === false) {
+      return null;
+    }
+    
+    if (isset($this->options[$name]) === false) {
+      return null;
+    }
+    
+    return $this->options[$name];
   }
 
   protected function read_header($curl, $headers)
