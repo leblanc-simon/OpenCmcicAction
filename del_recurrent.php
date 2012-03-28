@@ -21,7 +21,7 @@ try {
   }
   
   // Launch browser
-  $cmcic = getCmcic($options);
+  $cmcic = getCmcic();
   
   // Get all payments with more than $nb_occurences occurences
   $references = $cmcic->getPaymentsWithMore($nb_occurences);

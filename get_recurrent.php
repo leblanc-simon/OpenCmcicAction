@@ -34,7 +34,7 @@ try {
   $end->setDate((int)$matches_fin[1], (int)$matches_fin[2], (int)$matches_fin[3]);
   
   // Launch browser
-  $cmcic = getCmcic($options);
+  $cmcic = getCmcic();
   
   // Launch program
   $payments = $cmcic->getRecurrentPayments($begin, $end);

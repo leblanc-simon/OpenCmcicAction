@@ -22,27 +22,33 @@ sfConfig::set('sf_data_dir', dirname(__FILE__).DIRECTORY_SEPARATOR.'data');
 sfConfig::set('sf_log_dir', dirname(__FILE__).DIRECTORY_SEPARATOR.'log');
 
 // define options browser
-$options = array(
+sfConfig::set('cmcic_options', array(
   'cookies'         => true,
   'verbose'         => true,
   'verbose_log'     => true,
   'useragent'       => 'Mozilla/5.0 (X11; U; Linux i686; fr; rv:1.9.2.23; OpenCmcicAction) Gecko/20110921 Ubuntu/10.04 (lucid) Firefox/3.6.23',
   'SSL_VERIFYPEER'  => false,
-);
+));
 
 // define connection parameter
-define('CMCIC_LOGIN', '[your login]');
-define('CMCIC_PASS',  '[your password]');
-define('CMCIC_TPE',   '[your tpe number]');
+sfConfig::set('cmcic_login', '[your login]');
+sfConfig::set('cmcic_pass',  '[your password]');
+sfConfig::set('cmcic_tpe',   '[your tpe number]');
 
 
+/**
+ * Récupère l'objet Cmcic
+ *
+ * @param   array   $options    Le tableau des options du browser
+ * @return  Cmcic               L'oject Cmcic
+ */
 function getCmcic($options)
 {
   // Init browser
   Cmcic::setClassName('sfWebBrowser');
   Cmcic::setAdapter('sfCurlAdapter');
-  Cmcic::setOptions($options);
+  Cmcic::setOptions(array_merge(sfConfig::get('cmcic_options'), $options));
   
   // Launch browser
-  return new Cmcic(CMCIC_LOGIN, CMCIC_PASS, CMCIC_TPE);
+  return new Cmcic(sfConfig::get('cmcic_login'), sfConfig::get('cmcic_pass'), sfConfig::get('cmcic_tpe'));
 }

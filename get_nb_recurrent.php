@@ -16,7 +16,7 @@ try {
   }
   
   // Launch browser
-  $cmcic = getCmcic($options);
+  $cmcic = getCmcic();
   
   // Launch program
   $nb_payments = $cmcic->getNbCurrentPayments();

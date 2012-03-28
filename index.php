@@ -12,7 +12,7 @@ require_once dirname(__FILE__).'/config.inc.php';
 
 try {
   // Launch browser
-  $cmcic = getCmcic($options);
+  $cmcic = getCmcic();
   
   // Get all recurrent payment between begin and end
   $begin  = new DateTime();
