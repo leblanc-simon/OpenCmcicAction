@@ -80,6 +80,10 @@ class Cmcic
     $xpath = new DomXpath($dom);
     
     if ($radio = $xpath->query('//input[@type="radio" and @value="S"]')->item(0)) {
+      $field_value = 'S';
+      $name = $radio->getAttribute('name');
+    } elseif ($radio = $xpath->query('//input[@type="radio" and @value="A"]')->item(0)) {
+      $field_value = 'A';
       $name = $radio->getAttribute('name');
     } else {
       return false;
@@ -88,7 +92,7 @@ class Cmcic
     self::cleanCookies();
     self::checkSleepCall();
     
-    self::getBrowser()->setField($name, 'S')->click('Exécuter', array('' => 'Ex&eacute;cuter'));
+    self::getBrowser()->setField($name, $field_value)->click('Exécuter', array('' => 'Ex&eacute;cuter'));
     if (self::checkValid() === false) {
       return false;
     }
