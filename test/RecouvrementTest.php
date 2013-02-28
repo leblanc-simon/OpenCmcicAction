@@ -10,11 +10,11 @@ class RecouvrementTest extends PHPUnit_Framework_TestCase
      */
     public function testRecouvrement()
     {
-        $recouvrement = new OpenCmcicAction\Request\Recouvrement('TE1362089387', 10, 'contact@leblanc-simon.eu', '2013-02-28 23:09:47');
+        $recouvrement = new OpenCmcicAction\Request\Recouvrement('EI1362093746', 10, '2013-03-01 00:22:26');
         
         $response = $recouvrement->process();
         
-        $this->assertTrue($response->check(), 'Recouvrement is OK');
+        $this->assertTrue($response->check(), 'Recouvrement fail');
     }
     
     /**
@@ -26,7 +26,7 @@ class RecouvrementTest extends PHPUnit_Framework_TestCase
      */
     public function testRecouvrementFail()
     {
-        $recouvrement = new OpenCmcicAction\Request\Recouvrement('AA00000000', 10, 'contact@leblanc-simon.eu', '2013-02-28 23:09:47');
+        $recouvrement = new OpenCmcicAction\Request\Recouvrement('AA00000000', 10, '2013-02-28 23:09:47');
         
         $response = $recouvrement->process();
         $response->check();

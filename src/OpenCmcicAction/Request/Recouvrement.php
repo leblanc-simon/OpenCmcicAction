@@ -11,18 +11,16 @@ class Recouvrement extends Request implements IRequest
 {
     private $reference  = null;
     private $amount     = null;
-    private $email      = null;
     private $devise     = null;
     private $language   = null;
     private $date_recouvrement = null;
     private $date_commande = null;
     
     
-    public function __construct($reference = null, $amount = null, $email = null, $date_commande = null, $devise = 'EUR', $language = 'FR')
+    public function __construct($reference = null, $amount = null, $date_commande = null, $devise = 'EUR', $language = 'FR')
     {
         $reference !== null ? $this->setReference($reference) : null;
         $amount !== null ? $this->setAmount($amount) : null;
-        $email !== null ? $this->setEmail($email) : null;
         $devise !== null ? $this->setDevise($devise) : null;
         $language !== null ? $this->setLanguage($language) : null;
         $date_commande !== null ? $this->setDateCommande($date_commande) : null;
@@ -98,16 +96,6 @@ class Recouvrement extends Request implements IRequest
         }
         
         $this->amount = (float)$v;
-    }
-    
-    
-    public function setEmail($v)
-    {
-        if (is_string($v) === false || !preg_match('/.+@.+/', $v)) {
-            throw new Exception('email must be a string and a valid email');
-        }
-        
-        $this->email = (string)$v;
     }
     
     
