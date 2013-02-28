@@ -2,7 +2,7 @@
 
 namespace OpenCmcicAction\Cmcic;
 
-use OpenCmcicAction\Core\Exception;
+use OpenCmcicAction\Exception\Exception;
 use OpenCmcicAction\Core\Config;
 
 class Tpe

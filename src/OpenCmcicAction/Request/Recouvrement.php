@@ -5,7 +5,7 @@ namespace OpenCmcicAction\Request;
 use OpenCmcicAction\Cmcic\Tpe;
 use OpenCmcicAction\Cmcic\Hmac;
 use OpenCmcicAction\Core\Config;
-use OpenCmcicAction\Core\Exception;
+use OpenCmcicAction\Exception\Exception;
 
 class Recouvrement extends Request implements IRequest
 {

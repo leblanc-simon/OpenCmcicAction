@@ -2,6 +2,7 @@
 
 namespace OpenCmcicAction\Response;
 
+use OpenCmcicAction\Exception\Exception;
 use OpenCmcicAction\Exception\Recouvrement as ERecouvrement;
 
 class Recouvrement extends Response

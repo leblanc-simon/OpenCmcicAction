@@ -3,7 +3,7 @@
 namespace OpenCmcicAction\Request;
 
 use OpenCmcicAction\Core\Config;
-use OpenCmcicAction\Core\Exception;
+use OpenCmcicAction\Exception\Exception;
 
 abstract class Request
 {
