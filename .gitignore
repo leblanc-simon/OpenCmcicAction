@@ -1,1 +1,7 @@
+config/config.php
+config/config.test.php
+config/*.key
+log/*
+vendor/*
+composer.lock
 OpenCmcicAction.komodoproject
