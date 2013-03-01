@@ -28,7 +28,19 @@ class Recouvrement extends Request implements IRequest
     
     public function check()
     {
+        $datas_to_check = array(
+            'reference',
+            'amount',
+            'devise',
+            'language',
+            'date_commande',
+        );
         
+        foreach ($datas_to_check as $data) {
+            if ($this->$data === null) {
+                throw new Exception($data.' can\'t be null');
+            }
+        }
     }
     
     
