@@ -9,5 +9,9 @@ OpenCmcicAction\Core\Config::add(array(
     'cmcic_url_ok' => '',
     'cmcic_url_ko' => '',
     
+    'cmcic_web_server' => 'https://www.cmcicpaiement.fr/fr/test/',
+    'cmcic_web_username' => '',
+    'cmcic_web_password' => '',
+    
     'log_dir' => dirname(__DIR__).DIRECTORY_SEPARATOR.'log',
 ));
