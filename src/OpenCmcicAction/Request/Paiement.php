@@ -4,22 +4,85 @@ namespace OpenCmcicAction\Request;
 
 use OpenCmcicAction\Core\Config;
 use OpenCmcicAction\Exception\Exception;
+use OpenCmcicAction\Exception\Paiement as EPaiement;
 
 use Goutte\Client;
 
 class Paiement
 {
-    const PAYE = 1;
-    const ANNULE = 2;
-    const PARTIAL = 3;
+    /**
+     * The beginning date of the search
+     * 
+     * @access  private
+     */
+    private $begin_date = null;
     
+    /**
+     * The ending date of the search
+     * 
+     * @access  private
+     */
+    private $end_date = null;
     
-    public function __construct($type = self::PAYE)
+    /**
+     * Constructor
+     *
+     * @param   \DateTime   $begin  the beginning date of the search
+     * @param   \DateTime   $end    the ending date of the search
+     */
+    public function __construct(\DateTime $begin = null, \DateTime $end = null)
     {
+        if ($begin !== null) {
+            $this->begin_date = $begin;
+        } else {
+            $this->begin_date = new \DateTime();
+            $this->begin_date->sub(new \DateInterval('P1Y'));
+        }
         
+        if ($end !== null) {
+            $this->end_date = $end;
+        } else {
+            $this->end_date = new \DateTime();
+        }
+        
+        if ($this->begin_date > $this->end_date) {
+            list($this->begin_date, $this->end_date) = array($this->end_date, $this->begin_date);
+        }
     }
     
     
+    /**
+     * Get the beginning date for the search
+     *
+     * @param   string  $format     the string format of the date
+     * @return  string              the beginning date formating
+     * @access  public
+     */
+    public function getBeginDate($format = 'Y-m-d')
+    {
+        return $this->begin_date->format($format);
+    }
+    
+    
+    /**
+     * Get the ending date for the search
+     *
+     * @param   string  $format     the string format of the date
+     * @return  string              the ending date formating
+     * @access  public
+     */
+    public function getEndDate($format = 'Y-m-d')
+    {
+        return $this->end_date->format($format);
+    }
+    
+    
+    /**
+     * Get the datas of the paiements
+     *
+     * @return  array   the datas of the paiements
+     * @access  public
+     */
     public function process()
     {
         $client = new Client();
@@ -28,6 +91,7 @@ class Paiement
             'HTTP_USER_AGENT' => 'Mozilla/5.0 (X11; U; Linux i686; fr; rv:1.9.2.23; OpenCmcicAction) Gecko/20110921 Ubuntu/10.04 (lucid) Firefox/3.6.23'
         ));
         
+        // Authentification in the website
         $crawler = $client->request('GET', Config::get('cmcic_web_server').'identification/default.cgi');
         $form = $crawler->selectButton('Se connecter')->form();
         
@@ -36,6 +100,7 @@ class Paiement
             '_cm_pwd' => Config::get('cmcic_web_password'),
         ));
         
+        // Get the search form
         $crawler = $client->request('GET', Config::get('cmcic_web_server').'client/Paiement/Paiement_RechercheAvancee.aspx');
         $datas = array();
         
@@ -52,8 +117,8 @@ class Paiement
         
         $datas = array_merge($datas, array(
             'SelectionCritere' => 'Achat',
-            'Date_Debut' => '01/02/2013',
-            'Date_Fin' => '31/03/2013',
+            'Date_Debut' => $this->getBeginDate('d/m/Y'),
+            'Date_Fin' => $this->getEndDate('d/m/Y'),
             'SelectionAffichage' => 'Ecran',
             'Paye' => 'on',
             'Currency' => 'EUR',
@@ -71,7 +136,7 @@ class Paiement
             'Btn.Find.x' => '63',
             'Btn.Find.y' => '11',
             'NumeroTpe' => $datas['tpe_id'],
-            'paging' => 500,
+            'export' => 'XML',
         ));
         
         $parameter = '';
@@ -85,34 +150,71 @@ class Paiement
             $parameter .= $key.'='.urlencode($value);
         }
         
-        $crawler = $client->request('GET', Config::get('cmcic_web_server').'client/Paiement/Paiement_RechercheAvancee.aspx'.$parameter);
+        // Get the XML with all paiements
+        $client->request('GET', Config::get('cmcic_web_server').'client/Paiement/Paiement_RechercheAvancee.aspx'.$parameter);
+        $response = $client->getResponse();
         
-        $results = $crawler->filter('#m_PanelResultat table tbody tr')->each(function($node, $i) {
-            $tds = $node->childNodes;
-            if ($tds->length == 4) {
-                $link_node = $tds->item(0);
-                $date_node = $tds->item(1);
-                $amount_node = $tds->item(2);
-                $status_node = $tds->item(3);
-                
-                $datas = array(
-                    'date' => $date_node->nodeValue,
-                    'amount' => $amount_node->nodeValue,
-                    'status' => $status_node->nodeValue,
-                );
-                
-                if ($link_node->hasChildNodes() === true) {
-                    $a_node = $link_node->firstChild;
-                    if ($a_node !== null && $a_node->hasAttributes() === true) {
-                        $datas['link'] = $a_node->getAttribute('href');
-                    }
-                }
-                
-                return $datas;
+        if ($response->getStatus() !== 200) {
+            throw new EPaiement('Status error : '.$response->getStatus());
+        }
+        
+        $content = $response->getContent();
+        
+        $dom = new \DOMDocument();
+        if ($dom->loadXML($content) === false) {
+            throw new EPaiement('Impossible to load XML : '.$content);
+        }
+        
+        $results = array();
+        $commandes = $dom->getElementsByTagName('Commande');
+        
+        // Get data of the paiements
+        foreach ($commandes as $commande) {
+            $results[] = $this->parseCommande($commande);
+        }
+        
+        unset($dom, $response, $form, $crawler, $client);
+        
+        return $results;
+    }
+    
+    
+    /**
+     * Parse a paiement and return the datas
+     *
+     * @param   \DOMElement $node   the XML node with the datas of the paiement
+     * @return  array               the datas of the paiement
+     * @access  private
+     */
+    private function parseCommande(\DOMElement $node)
+    {
+        $datas = array();
+        
+        $reference_nodes = $node->getElementsByTagName('Reference');
+        if ($reference_nodes->length > 0) {
+            $datas['reference'] = $reference_nodes->item(0)->nodeValue;
+        }
+        
+        $date_nodes = $node->getElementsByTagName('DatePaiement');
+        if ($date_nodes->length > 0) {
+            $datas['date'] = $date_nodes->item(0)->nodeValue;
+        }
+        
+        $paiement_nodes = $node->getElementsByTagName('Montant');
+        if ($paiement_nodes->length > 0) {
+            $paiement_node = $paiement_nodes->item(0);
+            $amount_nodes = $paiement_node->getElementsByTagName('Valeur');
+            $currency_nodes = $paiement_node->getElementsByTagName('Devise');
+            
+            if ($amount_nodes->length > 0) {
+                $datas['amount'] = $amount_nodes->item(0)->nodeValue;
             }
-            return null;
-        });
+            
+            if ($currency_nodes->length > 0) {
+                $datas['currency'] = $currency_nodes->item(0)->nodeValue;
+            }
+        }
         
-        var_dump($results);
+        return $datas;
     }
 }
