@@ -1,10 +1,28 @@
 <?php
+/**
+ * This file is part of the OpenCmcicAction package.
+ *
+ * (c) Simon Leblanc <contact@leblanc-simon.eu>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace OpenCmcicAction\Request;
 
 use OpenCmcicAction\Core\Config;
 use OpenCmcicAction\Exception\Exception;
 
+
+/**
+ * Base request class
+ *
+ * @package     OpenCmcicAction\Request
+ * @version     1.0.0
+ * @abstract
+ * @license     http://opensource.org/licenses/MIT  MIT
+ * @author      Simon Leblanc <contact@leblanc-simon.eu>
+ */
 abstract class Request
 {
     private $handle_stderr = false;

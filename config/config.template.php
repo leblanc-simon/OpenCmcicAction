@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the OpenCmcicAction package.
+ *
+ * (c) Simon Leblanc <contact@leblanc-simon.eu>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 OpenCmcicAction\Core\Config::add(array(
     'cmcic_version' => '3.0',

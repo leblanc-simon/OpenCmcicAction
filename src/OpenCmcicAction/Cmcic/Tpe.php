@@ -1,10 +1,27 @@
 <?php
+/**
+ * This file is part of the OpenCmcicAction package.
+ *
+ * (c) Simon Leblanc <contact@leblanc-simon.eu>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace OpenCmcicAction\Cmcic;
 
 use OpenCmcicAction\Exception\Exception;
 use OpenCmcicAction\Core\Config;
 
+
+/**
+ * TPE parameter class
+ *
+ * @package     OpenCmcicAction\Cmcic
+ * @version     1.0.0
+ * @license     http://opensource.org/licenses/MIT  MIT
+ * @author      Simon Leblanc <contact@leblanc-simon.eu>
+ */
 class Tpe
 {
     const CTLHMAC = "V1.04.sha1.php--[CtlHmac%s%s]-%s";
