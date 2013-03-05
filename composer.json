@@ -1,5 +1,5 @@
 {
-    "name": "open-cmcic-action/open-cmcic-action",
+    "name": "framasoft/opencmcicaction",
     "version": "1.0",
     "authors": [{
         "name": "Simon Leblanc",
@@ -9,6 +9,8 @@
     }],
     "license": "MIT",
     
+    "type": "library",
+    
     "autoload": {
         "psr-0": {
             "OpenCmcicAction": "src/"
@@ -16,6 +18,8 @@
     },
     
     "require": {
+        "php": ">=5.3.0",
+        "ext-curl": "*",
         "fabpot/goutte": "1.0.*@dev"
     },
     
